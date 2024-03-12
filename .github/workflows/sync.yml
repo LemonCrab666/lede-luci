@@ -33,25 +33,8 @@ jobs:
                   echo "[Error] Due to a change in the workflow file of the upstream repository, GitHub has automatically suspended the scheduled automatic update. You need to manually sync your fork."
                   exit 1
 
-            - name: Delete old workflow runs  
-                if: always()  
-              run: |  
-                runs=$(curl -s -H "Authorization: Bearer ${GITHUB_TOKEN}" "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runs" | jq -r '.workflow_runs[].id')  
-
-                if [ -z "$runs" ]; then  
-                  echo "No workflow runs found."  
-                  exit 0  
-                fi  
-  
-                IFS=$'\n' read -r -d '' ids<<<"$runs"  
-                ids=(${ids})  
-
-                latest_run=${ids[-1]}  
-
-                for run in "${ids[@]:0:${#ids[@]}-1}"; do  
-                  echo "Deleting workflow run: $run"  
-                  curl -s -X DELETE -H "Authorization: Bearer ${GITHUB_TOKEN}" "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runs/${run}"  
-                done  
-  
-                env:  
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            - name: Delete workflow runs
+              uses: GitRML/delete-workflow-runs@main
+              with:
+                retain_days: 1
+                keep_minimum_runs: 1
